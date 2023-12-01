@@ -1,0 +1,31 @@
+version: "3"
+
+x-common-env: &cenv
+  POSTGRES_USER: pguser
+  POSTGRES_PASSWORD: localdbpass
+  POSTGRES_DB: testdb
+    
+services:
+  gotest:
+    build:
+      context: .
+    links:
+      - postgres
+    environment:
+      <<: *cenv
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres
+    restart: always
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      <<: *cenv
+    healthcheck:
+      test: "pg_isready -q -d testdb -U pguser"
+      interval: 5s
+      timeout: 5s
+      retries: 10
